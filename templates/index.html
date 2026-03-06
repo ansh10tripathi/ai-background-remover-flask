@@ -13,14 +13,13 @@
 
 <h1>AI Background Remover</h1>
 
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" action="/" enctype="multipart/form-data">
+
+<input type="file" name="image" id="fileInput" accept="image/*" style="display:none;" required>
 
 <div class="drop-area" id="dropArea">
-
 <p>Drag & Drop Image</p>
 <p>or Click to Upload</p>
-
-
 </div>
 
 <img id="preview">

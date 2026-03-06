@@ -19,7 +19,7 @@ def index():
 
     if request.method == "POST":
 
-        file = request.files["file"]
+        file = request.files["image"]
 
         if file:
 
