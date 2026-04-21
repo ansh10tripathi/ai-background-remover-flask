@@ -1,97 +1,443 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="dark">
 
 <head>
-
-<title>AI Background Remover</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Background Remover</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    const saved = localStorage.getItem('theme') || 'dark'
+    document.documentElement.setAttribute('data-theme', saved)
+  </script>
 </head>
 
-<body>
+<body class="min-h-screen font-sans" id="appBody">
 
-<h1>AI Background Remover</h1>
+  <!-- Navbar -->
+  <nav class="border-b px-6 py-4 flex items-center justify-between max-w-6xl mx-auto" id="navbar">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-sm font-bold text-white">AI</div>
+      <span class="font-semibold text-lg tracking-tight">BG Remover</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-xs px-3 py-1 rounded-full hidden sm:inline" id="poweredBadge">Powered by rembg</span>
+      <button id="themeToggle" aria-label="Toggle theme"
+        class="w-10 h-10 flex items-center justify-center rounded-xl text-lg transition-colors duration-200">
+        <span id="themeIcon"></span>
+      </button>
+    </div>
+  </nav>
 
-<form method="POST" action="/" enctype="multipart/form-data">
+  <!-- Hero -->
+  <div class="text-center mt-14 mb-10 px-4">
+    <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-violet-500 to-pink-500 bg-clip-text text-transparent">
+      Remove Backgrounds Instantly
+    </h1>
+    <p class="mt-3 text-base sm:text-lg max-w-xl mx-auto" id="heroSub">
+      Upload any image and let AI remove, blur, or enhance it in seconds.
+    </p>
+  </div>
 
-<input type="file" name="image" id="fileInput" accept="image/*" style="display:none;" required>
+  <!-- Main Card -->
+  <div class="max-w-2xl mx-auto px-4">
+    <div class="rounded-2xl p-8 shadow-xl card">
 
-<div class="drop-area" id="dropArea">
-<p>Drag & Drop Image</p>
-<p>or Click to Upload</p>
-</div>
+      <!-- Error box (server-rendered) -->
+      <div id="errorBox" class="mb-6 text-sm rounded-xl px-4 py-3 error-box {% if not error %}hidden{% endif %}">
+        ⚠ <span id="errorMsg">{{ error or '' }}</span>
+      </div>
 
-<img id="preview">
+      <form id="mainForm" enctype="multipart/form-data">
 
-<br>
+        <input type="file" name="image" id="fileInput" accept="image/*" class="hidden">
+        <input type="hidden" name="saved_filename" id="savedFilename" value="{{ saved_filename or '' }}">
+        <input type="hidden" name="saved_rembg"    id="savedRembg"    value="{{ saved_rembg or '' }}">
 
-<button type="submit">Remove Background</button>
+        <!-- Drop Zone -->
+        <div id="dropArea" class="drop-zone border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200">
+          <div class="text-4xl mb-3">🖼️</div>
+          <p class="font-medium drop-text-main">Drag & Drop your image here</p>
+          <p class="text-sm mt-1 drop-text-sub">or <span class="text-violet-500 underline underline-offset-2">click to browse</span></p>
+          <p class="text-xs mt-3 drop-text-hint">Supports JPG, PNG, WEBP</p>
+        </div>
 
-</form>
+        <!-- Upload progress bar (hidden until upload starts) -->
+        <div id="progressWrap" class="hidden mt-4">
+          <div class="flex justify-between text-xs mb-1 progress-label">
+            <span>Uploading…</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="progress-track rounded-full overflow-hidden">
+            <div id="progressBar" class="progress-bar" style="width:0%"></div>
+          </div>
+        </div>
 
+        <!-- Preview + file info -->
+        <div id="previewWrap" class="hidden mt-6">
+          <img id="preview" class="mx-auto max-h-56 rounded-xl object-contain shadow-lg preview-img" alt="Preview">
+          <!-- (b) File dimensions and size -->
+          <div id="fileInfo" class="mt-2 text-center text-xs file-info-text"></div>
+          <!-- (c) Try another image button -->
+          <div class="mt-3 text-center">
+            <button type="button" id="tryAnotherBtn" class="try-another-btn text-xs px-4 py-1.5 rounded-lg transition-colors">
+              🔄 Try another image
+            </button>
+          </div>
+        </div>
 
-{% if output_image %}
+        <!-- Action Buttons -->
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
 
-<h2>Before vs After</h2>
+          <button type="button" data-action="remove"
+            class="action-btn flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 active:scale-95 transition-all text-white font-semibold py-3 rounded-xl text-sm">
+            ✂️ Remove BG
+          </button>
 
-<div class="compare-images">
+          <button type="button" data-action="blur"
+            class="action-btn flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 active:scale-95 transition-all text-white font-semibold py-3 rounded-xl text-sm">
+            🌫️ Blur BG
+          </button>
 
-<div class="image-box">
-<h3>Original</h3>
-<img src="{{ original_image }}">
-</div>
+          <!-- Enhance: radio pills + button -->
+          <div class="flex flex-col gap-2">
+            <div class="enhance-mode-toggle flex rounded-xl overflow-hidden border border-emerald-600 text-xs font-semibold">
+              <label class="enhance-mode-label flex-1 text-center cursor-pointer py-1.5 transition-colors">
+                <input type="radio" name="enhance_mode" value="no_bg" class="hidden"
+                  {% if enhance_mode != 'with_bg' %}checked{% endif %}>
+                <span>✂️ No BG</span>
+              </label>
+              <label class="enhance-mode-label flex-1 text-center cursor-pointer py-1.5 transition-colors">
+                <input type="radio" name="enhance_mode" value="with_bg" class="hidden"
+                  {% if enhance_mode == 'with_bg' %}checked{% endif %}>
+                <span>🖼️ With BG</span>
+              </label>
+            </div>
+            <button type="button" data-action="enhance"
+              class="action-btn flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-semibold py-3 rounded-xl text-sm">
+              ✨ Enhance
+            </button>
+          </div>
 
-<div class="image-box">
-<h3>Background Removed</h3>
-<img src="{{ output_image }}">
-</div>
+        </div>
+      </form>
+    </div>
+  </div>
 
-</div>
+  <!-- Loading overlay (AI processing — shown after upload completes) -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center">
+    <div class="loading-card rounded-2xl px-10 py-8 flex flex-col items-center gap-4 shadow-2xl">
+      <div class="loading-spinner"></div>
+      <p class="text-sm font-semibold loading-text" id="loadingText">Processing...</p>
+    </div>
+  </div>
 
-<br>
+  <!-- Results (injected by XHR response or server-rendered on first load) -->
+  <div id="resultsSection">
+  {% if result_image %}
+  <div class="max-w-4xl mx-auto px-4 mt-12 mb-16">
 
-<a href="{{ output_image }}" download="bg_removed.png">
-<button>Download Image</button>
-</a>
+    <div class="flex items-center justify-center gap-3 mb-6">
+      <h2 class="text-2xl font-bold result-heading">Before vs After</h2>
+      <span class="text-xs font-semibold px-3 py-1 rounded-full border {{ badge }}">{{ result_label }}</span>
+    </div>
 
-{% endif %}
+    <div class="rounded-2xl p-4 shadow-xl card">
+      <div class="compare-labels text-sm font-semibold mb-2 px-1 compare-label-text">
+        <span>⬅ {{ result_label }}</span>
+        <span>Original ➡</span>
+      </div>
+      <div class="compare-box" id="compareBox">
+        <img class="img-after"  src="{{ result_image }}"   draggable="false" alt="{{ result_label }}">
+        <div class="img-before-wrap" id="beforeWrap">
+          <img class="img-before" src="{{ original_image }}" draggable="false" alt="Original">
+        </div>
+        <div class="divider" id="divider">
+          <div class="divider-handle">⠿</div>
+        </div>
+      </div>
+    </div>
 
-<script>
+    <div class="mt-6 text-center">
+      <a href="{{ result_image }}" download="result.png">
+        <button class="download-btn inline-flex items-center gap-2 font-bold px-8 py-3 rounded-xl active:scale-95 transition-all shadow-lg text-sm">
+          ⬇ Download Result
+        </button>
+      </a>
+    </div>
 
-const dropArea = document.getElementById("dropArea")
-const fileInput = document.getElementById("fileInput")
-const preview = document.getElementById("preview")
+  </div>
+  {% endif %}
+  </div>
 
-dropArea.onclick = () => fileInput.click()
+  <script>
+  // ═══════════════════════════════════════════════════════════════
+  // THEME TOGGLE
+  // ═══════════════════════════════════════════════════════════════
+  const root      = document.documentElement
+  const themeIcon = document.getElementById("themeIcon")
 
-fileInput.addEventListener("change", function(){
+  function applyTheme(theme) {
+    root.setAttribute("data-theme", theme)
+    localStorage.setItem("theme", theme)
+    themeIcon.textContent = theme === "dark" ? "☀️" : "🌙"
+  }
+  applyTheme(root.getAttribute("data-theme") || "dark")
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark")
+  })
 
-const file = this.files[0]
-preview.src = URL.createObjectURL(file)
+  // ═══════════════════════════════════════════════════════════════
+  // ENHANCE RADIO PILLS
+  // ═══════════════════════════════════════════════════════════════
+  function syncRadio() {
+    document.querySelectorAll(".enhance-mode-label").forEach(label => {
+      label.classList.toggle("enhance-mode-active", label.querySelector("input").checked)
+    })
+  }
+  document.querySelectorAll("input[name=enhance_mode]").forEach(r => r.addEventListener("change", syncRadio))
+  syncRadio()
 
-})
+  // ═══════════════════════════════════════════════════════════════
+  // FILE SELECTION — preview + (b) dimensions/size
+  // ═══════════════════════════════════════════════════════════════
+  const fileInput   = document.getElementById("fileInput")
+  const dropArea    = document.getElementById("dropArea")
+  const preview     = document.getElementById("preview")
+  const previewWrap = document.getElementById("previewWrap")
+  const fileInfo    = document.getElementById("fileInfo")
+  const savedField  = document.getElementById("savedFilename")
+  const savedRembg  = document.getElementById("savedRembg")
 
-dropArea.addEventListener("dragover", e=>{
-e.preventDefault()
-dropArea.classList.add("dragover")
-})
+  function formatBytes(bytes) {
+    if (bytes < 1024)       return bytes + " B"
+    if (bytes < 1048576)    return (bytes / 1024).toFixed(1) + " KB"
+    return (bytes / 1048576).toFixed(2) + " MB"
+  }
 
-dropArea.addEventListener("dragleave", ()=>{
-dropArea.classList.remove("dragover")
-})
+  function showFileInfo(file) {
+    const url = URL.createObjectURL(file)
+    preview.src = url
+    previewWrap.classList.remove("hidden")
+    savedField.value = ""
+    savedRembg.value = ""
 
-dropArea.addEventListener("drop", e=>{
+    // Load into a temp Image to read natural dimensions
+    const tmp = new Image()
+    tmp.onload = () => {
+      fileInfo.textContent = `${tmp.naturalWidth} × ${tmp.naturalHeight} px  •  ${formatBytes(file.size)}`
+    }
+    tmp.src = url
+  }
 
-e.preventDefault()
+  dropArea.onclick = () => fileInput.click()
+  fileInput.addEventListener("change", function() {
+    if (this.files[0]) showFileInfo(this.files[0])
+  })
+  dropArea.addEventListener("dragover",  e => { e.preventDefault(); dropArea.classList.add("drop-active") })
+  dropArea.addEventListener("dragleave", ()  => dropArea.classList.remove("drop-active"))
+  dropArea.addEventListener("drop", e => {
+    e.preventDefault()
+    dropArea.classList.remove("drop-active")
+    fileInput.files = e.dataTransfer.files
+    if (e.dataTransfer.files[0]) showFileInfo(e.dataTransfer.files[0])
+  })
 
-fileInput.files = e.dataTransfer.files
+  // ═══════════════════════════════════════════════════════════════
+  // (c) TRY ANOTHER IMAGE — reset without page reload
+  // ═══════════════════════════════════════════════════════════════
+  document.getElementById("tryAnotherBtn").addEventListener("click", () => {
+    // Clear file input
+    fileInput.value = ""
+    // Hide preview section
+    previewWrap.classList.add("hidden")
+    preview.src = ""
+    fileInfo.textContent = ""
+    // Clear session fields
+    savedField.value = ""
+    savedRembg.value = ""
+    // Clear results
+    document.getElementById("resultsSection").innerHTML = ""
+    // Clear any error
+    const eb = document.getElementById("errorBox")
+    eb.classList.add("hidden")
+    document.getElementById("errorMsg").textContent = ""
+    // Reset progress bar
+    setProgress(0)
+    document.getElementById("progressWrap").classList.add("hidden")
+    // Re-enable action buttons
+    document.querySelectorAll(".action-btn").forEach(b => {
+      b.style.pointerEvents = ""
+      b.style.opacity       = ""
+    })
+  })
 
-preview.src = URL.createObjectURL(e.dataTransfer.files[0])
+  // ═══════════════════════════════════════════════════════════════
+  // (a) XHR UPLOAD WITH PROGRESS BAR
+  // ═══════════════════════════════════════════════════════════════
+  const overlay      = document.getElementById("loadingOverlay")
+  const loadingText  = document.getElementById("loadingText")
+  const progressWrap = document.getElementById("progressWrap")
+  const progressBar  = document.getElementById("progressBar")
+  const progressPct  = document.getElementById("progressPct")
 
-})
+  const messages = {
+    remove:  "Removing background…",
+    blur:    "Blurring background…",
+    enhance: "Enhancing image…"
+  }
 
-</script>
+  function setProgress(pct) {
+    progressBar.style.width  = pct + "%"
+    progressPct.textContent  = pct + "%"
+  }
+
+  function showError(msg) {
+    const eb = document.getElementById("errorBox")
+    document.getElementById("errorMsg").textContent = msg
+    eb.classList.remove("hidden")
+  }
+
+  function submitAction(action) {
+    const form        = document.getElementById("mainForm")
+    const formData    = new FormData(form)
+    const enhanceMode = form.querySelector("input[name=enhance_mode]:checked")?.value || "no_bg"
+
+    formData.set("action", action)
+    formData.set("enhance_mode", enhanceMode)
+
+    // Reset UI state
+    document.getElementById("errorBox").classList.add("hidden")
+    setProgress(0)
+    progressWrap.classList.remove("hidden")
+    document.querySelectorAll(".action-btn").forEach(b => {
+      b.style.pointerEvents = "none"
+      b.style.opacity       = "0.6"
+    })
+
+    const xhr = new XMLHttpRequest()
+    xhr.open("POST", "/", true)
+
+    // (a) Real-time upload progress
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100)
+        setProgress(pct)
+        // Once upload is 100%, switch to AI processing overlay
+        if (pct === 100) {
+          progressWrap.classList.add("hidden")
+          loadingText.textContent = messages[action] || "Processing…"
+          overlay.classList.remove("hidden")
+        }
+      }
+    }
+
+    xhr.upload.onerror = () => {
+      progressWrap.classList.add("hidden")
+      overlay.classList.add("hidden")
+      resetButtons()
+      showError("Upload failed. Please try again.")
+    }
+
+    xhr.onload = () => {
+      overlay.classList.add("hidden")
+      progressWrap.classList.add("hidden")
+      resetButtons()
+
+      if (xhr.status === 200 || xhr.status === 429 || xhr.status === 413) {
+        // Parse the returned HTML and extract the results section + hidden fields
+        const parser  = new DOMParser()
+        const doc     = parser.parseFromString(xhr.responseText, "text/html")
+
+        // Inject new results
+        const newResults = doc.getElementById("resultsSection")
+        if (newResults) {
+          document.getElementById("resultsSection").innerHTML = newResults.innerHTML
+          initSlider()   // re-attach slider on new DOM
+        }
+
+        // Sync hidden session fields from response
+        const newFilename = doc.getElementById("savedFilename")?.value
+        const newRembg    = doc.getElementById("savedRembg")?.value
+        if (newFilename) savedField.value = newFilename
+        if (newRembg)    savedRembg.value = newRembg
+
+        // Show any error from response
+        const errMsg = doc.getElementById("errorMsg")?.textContent?.trim()
+        if (errMsg) showError(errMsg)
+
+        // Scroll to results
+        document.getElementById("resultsSection").scrollIntoView({ behavior: "smooth", block: "start" })
+
+      } else {
+        showError("Server error (" + xhr.status + "). Please try again.")
+      }
+    }
+
+    xhr.onerror = () => {
+      overlay.classList.add("hidden")
+      progressWrap.classList.add("hidden")
+      resetButtons()
+      showError("Network error. Please check your connection.")
+    }
+
+    xhr.send(formData)
+  }
+
+  function resetButtons() {
+    document.querySelectorAll(".action-btn").forEach(b => {
+      b.style.pointerEvents = ""
+      b.style.opacity       = ""
+    })
+  }
+
+  // Wire action buttons to XHR submit
+  document.querySelectorAll(".action-btn").forEach(btn => {
+    btn.addEventListener("click", () => submitAction(btn.dataset.action))
+  })
+
+  // ═══════════════════════════════════════════════════════════════
+  // (d) BEFORE / AFTER SLIDER WITH SNAP
+  // ═══════════════════════════════════════════════════════════════
+  const SNAP_THRESHOLD = 0.05   // snap when within 5% of either edge
+
+  function initSlider() {
+    const box     = document.getElementById("compareBox")
+    const divider = document.getElementById("divider")
+    const wrap    = document.getElementById("beforeWrap")
+    if (!box || !divider || !wrap) return
+
+    let dragging = false
+
+    function applySlider(rawPct) {
+      // (d) Snap to 0 or 1 when within threshold
+      let pct = rawPct
+      if (pct <= SNAP_THRESHOLD)       pct = 0
+      else if (pct >= 1 - SNAP_THRESHOLD) pct = 1
+      const pc = (pct * 100).toFixed(2) + "%"
+      wrap.style.width   = pc
+      divider.style.left = pc
+    }
+
+    function onMove(clientX) {
+      if (!dragging) return
+      const rect   = box.getBoundingClientRect()
+      const rawPct = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1)
+      applySlider(rawPct)
+    }
+
+    divider.addEventListener("mousedown",  () => dragging = true)
+    divider.addEventListener("touchstart", () => dragging = true, { passive: true })
+    window.addEventListener("mouseup",    () => dragging = false)
+    window.addEventListener("touchend",   () => dragging = false)
+    window.addEventListener("mousemove",  e => onMove(e.clientX))
+    window.addEventListener("touchmove",  e => onMove(e.touches[0].clientX), { passive: true })
+  }
+
+  // Init slider for server-rendered result on first load
+  initSlider()
+  </script>
 
 </body>
 </html>

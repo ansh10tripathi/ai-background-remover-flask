@@ -1,135 +1,381 @@
-body{
-font-family:Arial;
-text-align:center;
-background:#f4f4f4;
+/* ══════════════════════════════════════════════════════════════════
+   THEME VARIABLES
+   All colors are defined here. JS only toggles data-theme on <html>.
+   No dependency on Tailwind dark: classes at all.
+══════════════════════════════════════════════════════════════════ */
+
+:root,
+[data-theme="dark"] {
+  --bg-page:        #030712;   /* gray-950  */
+  --bg-card:        #111827;   /* gray-900  */
+  --bg-badge:       #1f2937;   /* gray-800  */
+  --bg-toggle:      #1f2937;
+  --bg-toggle-hover:#374151;   /* gray-700  */
+  --bg-drop:        #111827;
+  --border-main:    #1f2937;   /* gray-800  */
+  --border-drop:    #374151;   /* gray-700  */
+  --text-primary:   #ffffff;
+  --text-sub:       #9ca3af;   /* gray-400  */
+  --text-hint:      #4b5563;   /* gray-600  */
+  --text-drop-main: #d1d5db;   /* gray-300  */
+  --slider-bg:      #111827;
+  --download-bg:    #ffffff;
+  --download-text:  #111827;
+  --download-hover: #f3f4f6;
 }
 
-h1{
-margin-top:30px;
+[data-theme="light"] {
+  --bg-page:        #f3f4f6;   /* gray-100  */
+  --bg-card:        #ffffff;
+  --bg-badge:       #e5e7eb;   /* gray-200  */
+  --bg-toggle:      #e5e7eb;
+  --bg-toggle-hover:#d1d5db;   /* gray-300  */
+  --bg-drop:        #ffffff;
+  --border-main:    #e5e7eb;   /* gray-200  */
+  --border-drop:    #d1d5db;   /* gray-300  */
+  --text-primary:   #111827;
+  --text-sub:       #6b7280;   /* gray-500  */
+  --text-hint:      #9ca3af;   /* gray-400  */
+  --text-drop-main: #374151;   /* gray-700  */
+  --slider-bg:      #f3f4f6;
+  --download-bg:    #111827;
+  --download-text:  #ffffff;
+  --download-hover: #1f2937;
 }
 
-.drop-area{
+/* ── Base ──────────────────────────────────────────────────────── */
 
-border:2px dashed #4CAF50;
-padding:40px;
-width:320px;
-margin:auto;
-cursor:pointer;
-background:white;
-
+*, *::before, *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
 }
 
-.drop-area.dragover{
-background:#e8ffe8;
+html {
+  background-color: var(--bg-page) !important;
 }
 
-button{
-
-margin-top:20px;
-padding:10px 20px;
-background:#4CAF50;
-color:white;
-border:none;
-cursor:pointer;
-font-size:16px;
-
+body {
+  background-color: var(--bg-page) !important;
+  color: var(--text-primary) !important;
 }
 
-button:hover{
-background:#3e8e41;
+/* ── Navbar ────────────────────────────────────────────────────── */
+
+#navbar {
+  border-color: var(--border-main) !important;
 }
 
-#preview{
-
-max-width:400px;
-margin-top:20px;
-
+#poweredBadge {
+  background: var(--bg-badge);
+  color: var(--text-sub);
 }
 
-
-/* Before After Slider */
-
-.img-base{
-
-width:100%;
-display:block;
-
+#themeToggle {
+  background: var(--bg-toggle);
+  color: var(--text-primary);
 }
 
-.img-overlay{
-
-position:absolute;
-top:0;
-left:0;
-height:100%;
-width:50%;
-overflow:hidden;
-
+#themeToggle:hover {
+  background: var(--bg-toggle-hover);
 }
 
-.img-overlay img{
+/* ── Hero ──────────────────────────────────────────────────────── */
 
-width:400px;
-display:block;
-
+#heroSub {
+  color: var(--text-sub);
 }
 
-#slider{
+/* ── Card ──────────────────────────────────────────────────────── */
 
-width:400px;
-margin-top:10px;
-
+.card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-main) !important;
 }
 
-.compare-wrapper{
-width:400px;
-margin:auto;
-text-align:center;
+/* ── Error box ─────────────────────────────────────────────────── */
+
+.error-box {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
 }
 
-.img-container{
-position:relative;
-width:400px;
-height:auto;
+[data-theme="light"] .error-box {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
 }
 
-.img-container img{
-width:100%;
-display:block;
+/* ── Drop zone ─────────────────────────────────────────────────── */
+
+.drop-zone {
+  background:    var(--bg-drop);
+  border-color:  var(--border-drop);
 }
 
-.img-overlay{
-position:absolute;
-top:0;
-left:0;
-width:50%;
-height:100%;
-overflow:hidden;
+.drop-zone:hover {
+  border-color: #8b5cf6;
 }
 
-.img-overlay img{
-width:400px;
+[data-theme="dark"] .drop-zone:hover  { background: rgba(139,92,246,0.06); }
+[data-theme="light"] .drop-zone:hover { background: #f5f3ff; }
+
+.drop-zone.drop-active {
+  border-color: #8b5cf6;
 }
 
-#slider{
-width:400px;
-margin-top:10px;
+[data-theme="dark"]  .drop-zone.drop-active { background: rgba(139,92,246,0.08); }
+[data-theme="light"] .drop-zone.drop-active { background: #f5f3ff; }
+
+.drop-text-main { color: var(--text-drop-main); }
+.drop-text-sub  { color: var(--text-sub); }
+.drop-text-hint { color: var(--text-hint); }
+
+/* ── Preview image ─────────────────────────────────────────────── */
+
+.preview-img {
+  border: 1px solid var(--border-main);
 }
 
-.compare-images{
-display:flex;
-justify-content:center;
-gap:40px;
-margin-top:20px;
-flex-wrap:wrap;
+/* ── Result heading ────────────────────────────────────────────── */
+
+.result-heading {
+  color: var(--text-primary);
 }
 
-.image-box{
-text-align:center;
+/* ── Badges ────────────────────────────────────────────────────── */
+
+.badge-violet {
+  background: rgba(139,92,246,0.15);
+  color: #a78bfa;
+  border-color: rgba(139,92,246,0.35);
 }
 
-.image-box img{
-width:350px;
-border-radius:8px;
-box-shadow:0px 4px 10px rgba(0,0,0,0.2);
+.badge-sky {
+  background: rgba(14,165,233,0.15);
+  color: #38bdf8;
+  border-color: rgba(14,165,233,0.35);
+}
+
+.badge-emerald {
+  background: rgba(16,185,129,0.15);
+  color: #34d399;
+  border-color: rgba(16,185,129,0.35);
+}
+
+[data-theme="light"] .badge-violet {
+  background: #ede9fe; color: #7c3aed; border-color: #c4b5fd;
+}
+[data-theme="light"] .badge-sky {
+  background: #e0f2fe; color: #0284c7; border-color: #7dd3fc;
+}
+[data-theme="light"] .badge-emerald {
+  background: #d1fae5; color: #059669; border-color: #6ee7b7;
+}
+
+/* ── Compare labels ────────────────────────────────────────────── */
+
+.compare-label-text { color: var(--text-sub); }
+
+/* ── Download button ───────────────────────────────────────────── */
+
+.download-btn {
+  background: var(--download-bg);
+  color:      var(--download-text);
+}
+
+.download-btn:hover {
+  background: var(--download-hover);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BEFORE / AFTER SLIDER
+   Absolute stacking + overflow clipping — cannot use Tailwind alone.
+══════════════════════════════════════════════════════════════════ */
+
+.compare-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.compare-box {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  overflow: hidden;
+  border-radius: 12px;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.img-after {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+  background: var(--slider-bg);
+}
+
+.img-before-wrap {
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.img-before {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  max-width: 900px;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: var(--slider-bg);
+}
+
+.divider {
+  position: absolute;
+  top: 0; left: 50%;
+  width: 3px;
+  height: 100%;
+  background: #fff;
+  transform: translateX(-50%);
+  cursor: col-resize;
+}
+
+.divider-handle {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px; height: 40px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #444;
+}
+
+@media (max-width: 640px) {
+  .compare-box { height: 56vw; }
+}
+
+/* ── Loading overlay ───────────────────────────────────────────── */
+
+#loadingOverlay {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.loading-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
+  min-width: 200px;
+}
+
+.loading-text {
+  color: var(--text-primary);
+}
+
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid var(--border-main);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Enhance mode radio pills ──────────────────────────────────── */
+
+.enhance-mode-label {
+  color: var(--text-sub);
+  background: var(--bg-card);
+}
+
+.enhance-mode-label:hover {
+  color: var(--text-primary);
+}
+
+.enhance-mode-active {
+  background: #059669;   /* emerald-600 */
+  color: #ffffff !important;
+}
+
+/* ── Rate limit pills (429 page) ───────────────────────────────── */
+
+.rate-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid;
+}
+
+.rate-pill-amber {
+  background:   rgba(245, 158, 11, 0.12);
+  color:        #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.rate-pill-rose {
+  background:   rgba(244, 63, 94, 0.12);
+  color:        #fb7185;
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
+[data-theme="light"] .rate-pill-amber {
+  background: #fffbeb; color: #d97706; border-color: #fcd34d;
+}
+
+[data-theme="light"] .rate-pill-rose {
+  background: #fff1f2; color: #e11d48; border-color: #fda4af;
+}
+
+/* ── Upload progress bar ───────────────────────────────────────── */
+
+.progress-label {
+  color: var(--text-sub);
+}
+
+.progress-track {
+  height: 6px;
+  background: var(--border-main);
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  border-radius: 9999px;
+  transition: width 0.1s linear;
+}
+
+/* ── File info (dimensions + size) ────────────────────────────── */
+
+.file-info-text {
+  color: var(--text-hint);
+  letter-spacing: 0.02em;
+}
+
+/* ── Try another image button ──────────────────────────────────── */
+
+.try-another-btn {
+  background:   var(--bg-badge);
+  color:        var(--text-sub);
+  border:       1px solid var(--border-main);
+  cursor:       pointer;
+}
+
+.try-another-btn:hover {
+  background: var(--bg-toggle-hover);
+  color:      var(--text-primary);
 }

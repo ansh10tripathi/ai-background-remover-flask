@@ -1,3 +1,21 @@
-flask
-rembg[cpu]
-pillow
+# Web framework — 3.1.3 fixes Vary:Cookie cache disclosure (CVE GHSA-68rp-wp8r-4726)
+flask==3.1.3
+
+# Rate limiting
+flask-limiter==3.9.0
+
+# AI background removal — pin to avoid SSRF in built-in /api/remove endpoint
+# We do NOT use rembg's server mode, only the Python API, so SSRF is not exposed
+rembg[cpu]==2.0.57
+
+# Image processing — 12.1.1 fixes out-of-bounds write on crafted PSD (CVE GHSA-cfh3-3jmp-rvhc)
+pillow==12.1.1
+
+# ONNX runtime for rembg model inference
+onnxruntime==1.21.0
+
+# Production WSGI server
+gunicorn==23.0.0
+
+# WSGI utilities — 3.1.4 fixes Windows device name path hang (CVE GHSA-hgf8-39gv-g3f2)
+werkzeug==3.1.4

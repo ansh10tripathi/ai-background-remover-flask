@@ -1,9 +1,49 @@
-venv/
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Virtual Environment
+venv/
+.env/
+.env.*
+
+# Environment variables
 .env
-outputs/
-uploads/
+
+# Flask
+instance/
+*.sqlite3
+
+# Uploads & Outputs (VERY IMPORTANT)
+static/uploads/*
+static/outputs/*
+
+# Keep folder structure
+!static/uploads/.gitkeep
+!static/outputs/.gitkeep
+
+# Model cache (rembg)
+models/
+
+# Logs
+*.log
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Build / cache
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+*.tmp

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Too Many Requests — AI BG Remover</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    const saved = localStorage.getItem('theme') || 'dark'
+    document.documentElement.setAttribute('data-theme', saved)
+  </script>
+</head>
+
+<body class="min-h-screen font-sans">
+
+  <!-- Navbar -->
+  <nav class="border-b px-6 py-4 flex items-center justify-between max-w-6xl mx-auto" id="navbar">
+    <a href="/" class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-sm font-bold text-white">AI</div>
+      <span class="font-semibold text-lg tracking-tight">BG Remover</span>
+    </a>
+    <div class="flex items-center gap-3">
+      <span class="text-xs px-3 py-1 rounded-full hidden sm:inline" id="poweredBadge">Powered by rembg</span>
+      <button id="themeToggle" aria-label="Toggle theme"
+        class="w-10 h-10 flex items-center justify-center rounded-xl text-lg transition-colors duration-200">
+        <span id="themeIcon"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 429 Card -->
+  <div class="flex items-center justify-center px-4 mt-24">
+    <div class="rounded-2xl p-10 shadow-xl card text-center max-w-md w-full">
+
+      <div class="text-6xl mb-4">🚦</div>
+
+      <h1 class="text-3xl font-extrabold mb-2" style="color: var(--text-primary)">
+        Too Many Requests
+      </h1>
+
+      <p class="text-sm mb-6" style="color: var(--text-sub)">
+        {% if reason == "daily" %}
+          You've used all <strong>{{ daily_limit }}</strong> of your free daily requests.
+          Your quota resets at <strong>midnight</strong>. Come back tomorrow!
+        {% else %}
+          You're sending requests too fast — maximum <strong>10 per minute</strong> allowed.
+          Please wait a moment and try again.
+        {% endif %}
+      </p>
+
+      <!-- Limit info pills -->
+      <div class="flex justify-center gap-3 mb-8 flex-wrap">
+        <span class="rate-pill rate-pill-amber">⏱ 10 requests / minute</span>
+        <span class="rate-pill rate-pill-rose">📅 50 requests / day</span>
+      </div>
+
+      <a href="/">
+        <button class="download-btn inline-flex items-center gap-2 font-bold px-8 py-3 rounded-xl active:scale-95 transition-all shadow-lg text-sm">
+          ← Back to App
+        </button>
+      </a>
+
+    </div>
+  </div>
+
+  <script>
+  const root      = document.documentElement
+  const themeIcon = document.getElementById("themeIcon")
+
+  function applyTheme(theme) {
+    root.setAttribute("data-theme", theme)
+    localStorage.setItem("theme", theme)
+    themeIcon.textContent = theme === "dark" ? "☀️" : "🌙"
+  }
+  applyTheme(root.getAttribute("data-theme") || "dark")
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark")
+  })
+  </script>
+
+</body>
+</html>
