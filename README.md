@@ -112,7 +112,12 @@ python app.py
 http://127.0.0.1:5000
 ```
 
+### 8. Run the Online Web App
+```
+https://ai-bg-remover.up.railway.app/
 ---
+
+```
 
 ## 📸 How It Works
 
